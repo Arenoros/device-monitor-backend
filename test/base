@@ -1,0 +1,1 @@
+http://localhost:5000/add?name=test&ip=10.0.4.5&password=12345&login=test_device&platform_id=1

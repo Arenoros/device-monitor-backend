@@ -1,0 +1,4 @@
+__pycache__
+/env
+.vscode
+storage/devices.db
