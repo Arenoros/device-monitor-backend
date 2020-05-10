@@ -7,16 +7,14 @@ from app.device.model import Device
 import json
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
-mod_devices = Blueprint('devices', __name__, url_prefix='/devices')
+mod_devices = Blueprint('devices', __name__)
 
 @mod_devices.route('/', methods=['GET'])
 def index():
-    resp = {'fields': ['id','name', 'ip', 'platform_id'], 'data': []}
-    data = resp['data']
+    data = []
     for device in Device.select():
-        row = [device.id, device.name, device.ip, device.platform_id]
-        data.append(row)
-    return json.dumps(resp)
+        data.append({'id': device.id, 'name': device.name, 'host': device.ip, 'status': False })
+    return json.dumps(data)
 
 @mod_devices.route('/', methods=['POST'])
 def create():

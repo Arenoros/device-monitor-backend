@@ -10,17 +10,18 @@ db = SqliteDatabase('storage/devices.db')
 
 @app.errorhandler(404)
 def not_found(error):
-    return '404', 404 #render_template('404.html'), 404
+    return '<h1>404</h1>', 404 #render_template('404.html'), 404
 
 # Import a module / component using its blueprint handler variable (mod_auth)
 from app.device import mod_devices as devices_module
 
-@app.route('/')
+@app.route('/api')
 def index():
-    return redirect(devices_module.url_prefix)
+    return '<h1> FINALY</h1>'
+    return redirect(devices_module)
 
 # Register blueprint(s)
-app.register_blueprint(devices_module)
+app.register_blueprint(devices_module, url_prefix='/api/devices')
 
 try:
     db.connect()
