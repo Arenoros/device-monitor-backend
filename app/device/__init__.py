@@ -61,3 +61,9 @@ def load_from_gtables():
 @mod_devices.route('/<id>', methods=['GET'])
 def read(id):
     return f"<h1>{id}</h1>"
+
+# Set the route and accepted methods
+@mod_devices.route('/update_state', methods=['GET'])
+def update_state(id):
+    controllers.check_state()
+    return f"<h1>{id}</h1>"

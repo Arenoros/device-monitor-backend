@@ -1,5 +1,6 @@
 Flask
 Peewee
+peewee_migrate
 flask_restful
 paramiko
 gspread

@@ -1,4 +1,4 @@
-from peewee import SqliteDatabase, InternalError 
+from peewee import SqliteDatabase, InternalError
 from flask import  Flask, request, render_template, redirect
 from flask_restful import Resource, Api
 
@@ -14,6 +14,8 @@ def not_found(error):
 
 # Import a module / component using its blueprint handler variable (mod_auth)
 from app.device import mod_devices as devices_module
+from app.device.model import Device, SysParams, Platform
+from peewee import Model
 
 @app.route('/api')
 def index():
@@ -25,6 +27,7 @@ app.register_blueprint(devices_module, url_prefix='/api/devices')
 
 try:
     db.connect()
-    db.create_tables([device.model.Device])
+    db.create_tables(SysParams)
+    #db.create_tables([Device, Platform, SysParams])
 except InternalError as px:
     print(str(px))
