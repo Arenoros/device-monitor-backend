@@ -24,10 +24,3 @@ def index():
 
 # Register blueprint(s)
 app.register_blueprint(devices_module, url_prefix='/api/devices')
-
-try:
-    db.connect()
-    db.create_tables(SysParams)
-    #db.create_tables([Device, Platform, SysParams])
-except InternalError as px:
-    print(str(px))

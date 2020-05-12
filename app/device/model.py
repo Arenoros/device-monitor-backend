@@ -7,11 +7,11 @@ class Device(Model):
     id = PrimaryKeyField(null=False)
     name = CharField(unique=True)
     ip = CharField(unique=True)
-    login = CharField()
-    password = CharField()
-    protocol = CharField()
+    login = CharField(null=True)
+    password = CharField(null=True)
+    protocol = CharField(null=True)
     #comment = TextField(null=True)
-    platform_id = IntegerField()
+    platform_id = IntegerField(null=True)
     class Meta:
         table_name = 'devices'
         database = db

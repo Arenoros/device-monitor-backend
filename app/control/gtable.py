@@ -12,16 +12,35 @@ class State(Enum):
     DOWN = 2
 
 class Controller:
-    def __init__(self, name, ip, login, password, state = State.UNKNOWN):
+    def __init__(self, name, ip, login, password, protocol, state = State.UNKNOWN):
         self.name = name
         self.ip = ip
         self.login = login
         self.password = password
+        self.protocol = protocol
         self.state = state
 
+    def to_dict(self):
+        return {
+            'name': self.name, 
+            'ip': self.ip, 
+            'login': self.login, 
+            'password': self.password,
+            'protocol': self.protocol,
+            'state':  self.state == State.UP 
+        }
+    def from_dict(device):
+        return Controller(
+            name=device['name'],
+            ip=device['ip'],
+            login=device['login'],
+            password=device.get('password', None),
+            protocol=device['protocol'],
+            state=device.get('state', State.UNKNOWN)
+        )
+
     def __str__(self):
-        v = {'name': self.name, 'ip': self.ip, 'login': self.login, 'pass': self.password, 'state': self.state }
-        return f'{v}'
+        return f'{self.to_dict()}'
 
 class ControllersInfo:
     def load_nmap():
@@ -41,13 +60,27 @@ class ControllersInfo:
         return [first.strip(), '' if 'нет' in second else second.strip()]
 
     def load_from_gsheets(self):
+        res = []
         test = self.google_api.readTable(self.table, 'A3:K100')
         for row in test['values']:
             if len(row) < 4: continue
             name, ip, auth, protocol = row[:4]
-            if not 'ssh' in protocol: continue
+            if 'ssh' in protocol: 
+                protocol = 'ssh'
+            elif 'telnet' in protocol:
+                protocol = 'telnet'
+            else:
+                continue
             for ip in re.findall(r'(10\.\d+\.\d+\.\d+)', ip):
-                self.add_controller(name, ip, *self.split(auth))
+                login, password = ControllersInfo.split(auth)
+                res.append({
+                    'name': name, 
+                    'ip': ip, 
+                    'login': login, 
+                    'password': password,
+                    'protocol': protocol
+                })
+        return res
 
     def __init__(self):
         self.list = {}
@@ -58,17 +91,18 @@ class ControllersInfo:
             if len(row) < 4: continue
             self.add_controller(*row[:4])
 
-    def update_controller(self, name, ip, login, password):
+    def update_controller(self, ip, name=None, login=None, password=None, protocol=None):
         cntrl = self.list[ip]
-        cntrl.name = name
-        cntrl.login = login
-        cntrl.password = password
+        if name: cntrl.name = name
+        if login: cntrl.login = login
+        if password: cntrl.password = password
+        if protocol: cntrl.protocol = protocol
         return cntrl
 
-    def add_controller(self, name, ip, login, password):
+    def add_controller(self, name, ip, login, password, protocol):
         if ip in self.list: 
-            return update_controller(ip, name, login, password)
-        cntrl = Controller(name, ip, login, password)
+            return self.update_controller(ip, name, login, password, protocol)
+        cntrl = Controller(name, ip, login, password, protocol)
         self.list[ip] = cntrl
         return cntrl
 
