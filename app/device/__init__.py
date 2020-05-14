@@ -1,6 +1,7 @@
 # Import flask dependencies
 from flask import Blueprint, request, render_template, \
-                  flash, g, session, redirect, url_for
+                  flash, g, session, redirect, url_for, jsonify, abort, make_response
+
 from app.device.model import Device
 from app import db
 import json
@@ -20,13 +21,13 @@ def load_from_db():
             device.password, 
             device.protocol)
         by_id[device.id] = cntrl
-    controllers.check_state()
+    controllers.update_state(controllers.list.keys())
 
-@mod_devices.route('/', methods=['GET'])
+@mod_devices.route('', methods=['GET'])
 def index():
     res = {}
     if not by_id: load_from_db()
-    return json.dumps([[id, ctrl.to_dict()] for id, ctrl in by_id.items()]) #json.dumps({id: cntrl.to_dict() for id, ctrl in by_id.items()})
+    return jsonify({'data': [[id, ctrl.to_dict()] for id, ctrl in by_id.items()], 'code': 0})
 
 def insert(device):
     id = Device.insert(
@@ -38,17 +39,19 @@ def insert(device):
             platform_id=device.get('platform_id', None)
         ).on_conflict_replace().execute()
     by_id[id] = Controller.from_dict(device)
+    return id
 
-@mod_devices.route('/', methods=['POST'])
+@mod_devices.route('', methods=['POST'])
 def create():
-    form = request.args
+    form = request.get_json()
+    print(form)
     id = None
     with db.atomic():
         try:
-            insert(form)
+            id = insert(form)
         except Exception as err:
-            return json.dumps({'code': 1, 'err': err.message})
-    return json.dumps({'code': 0, 'id': id})
+            return jsonify({'code': 1, 'err': err})
+    return jsonify({'data': {'id': id}, 'code': 0})
 
 # Set the route and accepted methods
 @mod_devices.route('/import', methods=['POST'])
@@ -59,17 +62,36 @@ def load_from_gtables():
             try:
                 insert(controller)
             except Exception as err:
-                return json.dumps({'code': 1, 'err': err})
-    return json.dumps([[id, ctrl.to_dict()] for id, ctrl in by_id.items()])
+                return jsonify({'code': 1, 'err': err})
+    return jsonify({'data': [[id, ctrl.to_dict()] for id, ctrl in by_id.items()], 'code': 0})
     
 # Set the route and accepted methods
-@mod_devices.route('/update_state', methods=['GET'])
+@mod_devices.route('/update_state', methods=['POST'])
 def update_state():
-    controllers.check_state()
-    return json.dumps([ctrl.state == State.UP for ctrl in by_id.values()]  )
+    if not request.json: abort(403)
+    list_ip = request.get_json()
+    res = controllers.update_state(list_ip)
+    return jsonify({'data': res, 'code': 0})
+
+from app.control.ssh import Executor, LoadInfo
 
 # Set the route and accepted methods
-@mod_devices.route('/<id>', methods=['GET'])
+@mod_devices.route('/<int:id>', methods=['GET'])
 def read(id):
-    return f"<h1>{id}</h1>"
-
+    cntrl = by_id.get(id, None)
+    if not cntrl: 
+        device = Device.get(Device.id==id)
+        if not device: return make_response(jsonify({'error': 'not found'}), 404)
+        cntrl = controllers.add_controller(
+            device.name, 
+            device.ip, 
+            device.login,
+            device.password, 
+            device.protocol)
+        by_id[device.id] = cntrl
+    controllers.update_state([cntrl.ip])
+    if cntrl.state != State.UP:
+        return make_response(jsonify({'error': 'controller is down'}), 200)
+    exec = Executor(cntrl)
+    data = LoadInfo.all_info(exec)
+    return jsonify(data)

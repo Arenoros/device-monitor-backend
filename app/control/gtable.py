@@ -2,45 +2,9 @@ import re
 import os
 from app.wrappers import Shell, GoogleApi, TempFile
 import nmap
-from enum import Enum
 
+from app.device.types import Controller, State
 #from collections import namedtuple
-
-class State(Enum):
-    UNKNOWN = 0
-    UP = 1
-    DOWN = 2
-
-class Controller:
-    def __init__(self, name, ip, login, password, protocol, state = State.UNKNOWN):
-        self.name = name
-        self.ip = ip
-        self.login = login
-        self.password = password
-        self.protocol = protocol
-        self.state = state
-
-    def to_dict(self):
-        return {
-            'name': self.name, 
-            'ip': self.ip, 
-            'login': self.login, 
-            'password': self.password,
-            'protocol': self.protocol,
-            'state':  self.state == State.UP 
-        }
-    def from_dict(device):
-        return Controller(
-            name=device['name'],
-            ip=device['ip'],
-            login=device['login'],
-            password=device.get('password', None),
-            protocol=device['protocol'],
-            state=device.get('state', State.UNKNOWN)
-        )
-
-    def __str__(self):
-        return f'{self.to_dict()}'
 
 class ControllersInfo:
     def load_nmap():
@@ -106,13 +70,18 @@ class ControllersInfo:
         self.list[ip] = cntrl
         return cntrl
 
-    def check_state(self):
+    def update_state(self, list_ip):
+        res = []
         with TempFile() as tmp:
-            for ip in self.list: 
+            for ip in list_ip:
                 tmp.write(f'{ip}\n')
             check = self.nm.scan(f'-iL "{tmp.path}"', arguments='-sn -T5')
-            for ip, cntrl in self.list.items():
-                cntrl.state = State.UP if ip in check['scan'] else State.DOWN
+            for ip in list_ip:
+                state = State.UP if ip in check['scan'] else State.DOWN
+                cntrl = self.list.get(ip, None)
+                if cntrl: cntrl.state = state
+                res.append(state)
+        return res
 
     def print(self):
         for cntrl in self.list.values():
