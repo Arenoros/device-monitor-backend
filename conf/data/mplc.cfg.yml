@@ -1,0 +1,6 @@
+settings:
+  root: 'e:/Workspace/Work/MS4Git/Main/Source/MasterPLC/platform/linux'
+  replace_path:
+    '/opt/': 'g:'
+
+targets: 'e:/Workspace/Work/MS4Git/Main/Source/MasterPLC/platform/linux/targets'

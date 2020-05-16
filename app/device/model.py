@@ -22,16 +22,9 @@ class Device(Model):
 
 class Platform(Model):
     id = PrimaryKeyField(null=False)
-    os = CharField(null=False)
-    os_v = CharField()
-    arch = CharField(null=False)
-    libc = CharField()
-    libc_v = CharField()
-    stdlib = CharField()
-    stdlib_v = CharField()
-    target = CharField()
-    compiler = CharField()
-    compiler = CharField()
+    name = CharField(null=False)
+    settings = TextField()
+    meta = TextField()
 
     class Meta:
         table_name = 'platforms'

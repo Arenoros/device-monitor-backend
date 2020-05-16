@@ -1,0 +1,4 @@
+settings:
+  root: '/media/work/Workspace/Work/MS4Git/Main/Source/MasterPLC/platform/linux'
+
+targets: '/media/work/Workspace/Work/MS4Git/Main/Source/MasterPLC/platform/linux/targets'
