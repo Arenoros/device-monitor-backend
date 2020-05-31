@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from app.builder.settings import Settings
 from app.wrappes import Shell, YamlWrapper
+
 class ConanProfile:
     # settings: Settings = None
 
@@ -33,6 +34,9 @@ class ConanProfile:
         out.write(f'os={tools.platform.os}\n')
         if tools.platform.os == 'Neutrino':
             out.write(f'os.version=6.5\n')
+        elif tools.platform.os == 'WindowsCE':
+            out.write(f'os.version=5.0\n')
+            out.write(f'os.platform=PAC270\n')
         elif tools.platform.os == 'Android':
             match = re.search(r'-androideabi(\d+)-', tools.cc)
             if match:
@@ -67,7 +71,8 @@ class ConanProfile:
         if self.settings.platform.name == 'elbrus':
             out.write(f'openssl:no_async=True\n')
             out.write(f'libpq:with_spinlock=False\n')
-        
+        if self.settings.platform.os == 'Neutrino':
+            out.write(f'openssl:shared=False\n')
 
     def settings_section(self, out: io.StringIO()):
         out.write('[settings]\n')

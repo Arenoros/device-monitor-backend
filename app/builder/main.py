@@ -20,7 +20,7 @@ def install(targets, conanfile_path, pkg_dir):
     for target in targets:
         install_path = f'{pkg_dir}/{target}'
         os.makedirs(f'{install_path}', exist_ok=True)
-        if execute(target, f'install {conanfile_path} -if {install_path}'):
+        if execute(target, f'install {conanfile_path} -if {install_path} --build missing'):
             failed.append(target)
         else:
             successed.append(target)
