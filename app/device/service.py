@@ -2,8 +2,8 @@ import re
 import os
 from app.wrappers import Shell, GoogleApi, TempFile
 import nmap
-
 from app.device.types import Controller, State
+from app.device.model import ConnectedControllers, Device, Host
 #from collections import namedtuple
 
 class DeviceService:
